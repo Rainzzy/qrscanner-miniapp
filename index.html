@@ -45,9 +45,6 @@
   <div id="error"></div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
     const html5QrCode = new Html5Qrcode("reader");
 
     function startScanner() {
@@ -55,23 +52,21 @@
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
-          tg.sendData(decodedText);
+          console.log("✅ Scanned QR:", decodedText);
           html5QrCode.stop();
+          document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
         }
       ).catch(err => {
-        document.getElementById("error").innerText = "❌ Please allow camera access to scan QR code.";
+        document.getElementById("error").innerText = "❌ Scanner error: " + err;
       });
     }
 
-    // Simulate gesture to trigger camera access
     window.addEventListener("load", () => {
-      setTimeout(() => {
-        navigator.mediaDevices.getUserMedia({ video: true })
-          .then(() => startScanner())
-          .catch(() => {
-            document.getElementById("error").innerText = "❌ Camera access blocked. Please enable it in browser settings.";
-          });
-      }, 500);
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(() => startScanner())
+        .catch(() => {
+          document.getElementById("error").innerText = "❌ Please allow camera access in browser settings.";
+        });
     });
   </script>
 </body>
