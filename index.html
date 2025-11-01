@@ -5,7 +5,7 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
-  <h2>📷 Scan a QR Code</h2>
+  <h2>📷 Scanning QR Code...</h2>
   <div id="reader" style="width:300px;"></div>
   <script>
     const tg = window.Telegram.WebApp;
@@ -13,9 +13,11 @@
 
     function onScanSuccess(decodedText) {
       tg.sendData(decodedText); // Sends to bot
+      html5QrCode.stop(); // Stop camera after scan
     }
 
-    new Html5Qrcode("reader").start(
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       onScanSuccess
