@@ -17,7 +17,6 @@
       width: 100vw;
       height: 100vh;
       position: relative;
-      display: none;
     }
     #qr-frame {
       position: absolute;
@@ -38,23 +37,11 @@
       color: red;
       font-size: 16px;
     }
-    #start-btn {
-      margin-top: 40vh;
-      padding: 12px 24px;
-      font-size: 18px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
-  <button id="start-btn">📷 Start Scanning</button>
-  <div id="reader">
-    <div id="qr-frame"></div>
-  </div>
+  <div id="reader"></div>
+  <div id="qr-frame"></div>
   <div id="error"></div>
 
   <script>
@@ -63,44 +50,21 @@
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    document.getElementById("start-btn").addEventListener("click", async () => {
-      document.getElementById("start-btn").style.display = "none";
-      document.getElementById("reader").style.display = "block";
-
-      try {
-        // Force permission popup with full constraints
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 }
-          },
-          audio: false
-        });
-
-        // Stop stream immediately to release lock
-        stream.getTracks().forEach(track => track.stop());
-
-        // Start scanner after permission granted
-        html5QrCode.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          (decodedText) => {
-            if (tg && tg.sendData) {
-              tg.sendData(decodedText);
-            } else {
-              document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
-            }
-            html5QrCode.stop();
+    window.addEventListener("load", () => {
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          if (tg && tg.sendData) {
+            tg.sendData(decodedText);
+          } else {
+            document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
           }
-        ).catch(err => {
-          document.getElementById("error").innerText = "❌ Scanner error: " + err;
-        });
-
-      } catch (err) {
-        document.getElementById("error").innerText = "❌ Camera access blocked. Please enable it in browser or app settings.";
-      }
+          html5QrCode.stop();
+        }
+      ).catch(err => {
+        document.getElementById("error").innerText = "❌ Camera error: " + err;
+      });
     });
   </script>
 </body>
