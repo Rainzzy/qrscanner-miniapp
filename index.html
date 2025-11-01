@@ -50,22 +50,34 @@
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    window.addEventListener("DOMContentLoaded", () => {
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          if (tg && tg.sendData) {
-            tg.sendData(decodedText);
-          } else {
-            document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
+    async function triggerCameraPermission() {
+      try {
+        // Force native permission popup
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop()); // release lock
+
+        // Start scanner after permission granted
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            if (tg && tg.sendData) {
+              tg.sendData(decodedText);
+            } else {
+              document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
+            }
+            html5QrCode.stop();
           }
-          html5QrCode.stop();
-        }
-      ).catch(err => {
-        document.getElementById("error").innerText = "❌ Camera error: " + err;
-      });
-    });
+        ).catch(err => {
+          document.getElementById("error").innerText = "❌ Scanner error: " + err;
+        });
+
+      } catch (err) {
+        document.getElementById("error").innerText = "❌ Camera permission denied or blocked. Please enable it in Telegram app settings.";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", triggerCameraPermission);
   </script>
 </body>
 </html>
