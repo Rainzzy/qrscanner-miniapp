@@ -39,24 +39,30 @@
     const html5QrCode = new Html5Qrcode("reader");
 
     function startScanner() {
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          tg.sendData(decodedText);
-          html5QrCode.stop();
-        }
-      ).catch(err => {
-        document.getElementById("error").innerText = "❌ Please allow camera access to scan QR code.";
-      });
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(() => {
+          html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            (decodedText) => {
+              tg.sendData(decodedText);
+              html5QrCode.stop();
+            }
+          ).catch(err => {
+            document.getElementById("error").innerText = "❌ Scanner error: " + err;
+          });
+        })
+        .catch(() => {
+          document.getElementById("error").innerText = "❌ Please allow camera access to scan QR code.";
+        });
     }
 
-    // Simulate a user gesture after short delay
-    window.onload = () => {
+    // Simulate a user gesture to trigger camera access
+    window.addEventListener("load", () => {
       setTimeout(() => {
         document.getElementById("trigger").click();
-      }, 500); // Delay to ensure Telegram WebView is ready
-    };
+      }, 500); // Delay ensures Telegram WebView is ready
+    });
 
     document.getElementById("trigger").addEventListener("click", startScanner);
   </script>
