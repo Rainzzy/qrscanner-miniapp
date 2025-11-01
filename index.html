@@ -45,15 +45,21 @@
   <div id="error"></div>
 
   <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
     const html5QrCode = new Html5Qrcode("reader");
 
     html5QrCode.start(
       { facingMode: "environment" },
       { fps: 10, qrbox: { width: 250, height: 250 } },
       (decodedText) => {
-        console.log("✅ Scanned QR:", decodedText);
+        if (tg && tg.sendData) {
+          tg.sendData(decodedText); // Send to Telegram bot
+        } else {
+          document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
+        }
         html5QrCode.stop();
-        document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
       }
     ).catch(err => {
       document.getElementById("error").innerText = "❌ Camera error: " + err;
