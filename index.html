@@ -63,31 +63,44 @@
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    document.getElementById("start-btn").addEventListener("click", () => {
+    document.getElementById("start-btn").addEventListener("click", async () => {
       document.getElementById("start-btn").style.display = "none";
       document.getElementById("reader").style.display = "block";
 
-      // Force permission popup
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(() => {
-          html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            (decodedText) => {
-              if (tg && tg.sendData) {
-                tg.sendData(decodedText);
-              } else {
-                document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
-              }
-              html5QrCode.stop();
-            }
-          ).catch(err => {
-            document.getElementById("error").innerText = "❌ Scanner error: " + err;
-          });
-        })
-        .catch(() => {
-          document.getElementById("error").innerText = "❌ Camera access blocked. Please enable it in browser settings.";
+      try {
+        // Force permission popup with full constraints
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 }
+          },
+          audio: false
         });
+
+        // Stop stream immediately to release lock
+        stream.getTracks().forEach(track => track.stop());
+
+        // Start scanner after permission granted
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            if (tg && tg.sendData) {
+              tg.sendData(decodedText);
+            } else {
+              document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
+            }
+            html5QrCode.stop();
+          }
+        ).catch(err => {
+          document.getElementById("error").innerText = "❌ Scanner error: " + err;
+        });
+
+      } catch (err) {
+        document.getElementById("error").innerText = "❌ Camera access blocked. Please enable it in browser or app settings.";
+      }
     });
   </script>
 </body>
