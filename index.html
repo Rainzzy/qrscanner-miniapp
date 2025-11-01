@@ -6,30 +6,42 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body {
+      margin: 0;
+      padding: 0;
+      background: black;
       font-family: sans-serif;
       text-align: center;
-      margin: 0;
-      padding: 20px;
-      background: #f9f9f9;
+      color: white;
     }
     #reader {
-      width: 100%;
-      max-width: 320px;
-      margin: auto;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    #qr-frame {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 250px;
+      height: 250px;
+      transform: translate(-50%, -50%);
+      border: 3px solid red;
+      box-sizing: border-box;
+      z-index: 10;
     }
     #error {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
       color: red;
-      margin-top: 20px;
-    }
-    #trigger {
-      display: none;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h2>📷 Scanning QR Code...</h2>
-  <button id="trigger">Start</button>
   <div id="reader"></div>
+  <div id="qr-frame"></div>
   <div id="error"></div>
 
   <script>
@@ -39,32 +51,28 @@
     const html5QrCode = new Html5Qrcode("reader");
 
     function startScanner() {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(() => {
-          html5QrCode.start(
-            { facingMode: "environment" },
-            { fps: 10, qrbox: 250 },
-            (decodedText) => {
-              tg.sendData(decodedText);
-              html5QrCode.stop();
-            }
-          ).catch(err => {
-            document.getElementById("error").innerText = "❌ Scanner error: " + err;
-          });
-        })
-        .catch(() => {
-          document.getElementById("error").innerText = "❌ Please allow camera access to scan QR code.";
-        });
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          tg.sendData(decodedText);
+          html5QrCode.stop();
+        }
+      ).catch(err => {
+        document.getElementById("error").innerText = "❌ Please allow camera access to scan QR code.";
+      });
     }
 
-    // Simulate a user gesture to trigger camera access
+    // Simulate gesture to trigger camera access
     window.addEventListener("load", () => {
       setTimeout(() => {
-        document.getElementById("trigger").click();
-      }, 500); // Delay ensures Telegram WebView is ready
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(() => startScanner())
+          .catch(() => {
+            document.getElementById("error").innerText = "❌ Camera access blocked. Please enable it in browser settings.";
+          });
+      }, 500);
     });
-
-    document.getElementById("trigger").addEventListener("click", startScanner);
   </script>
 </body>
 </html>
