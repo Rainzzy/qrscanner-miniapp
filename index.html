@@ -47,26 +47,16 @@
   <script>
     const html5QrCode = new Html5Qrcode("reader");
 
-    function startScanner() {
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          console.log("✅ Scanned QR:", decodedText);
-          html5QrCode.stop();
-          document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
-        }
-      ).catch(err => {
-        document.getElementById("error").innerText = "❌ Scanner error: " + err;
-      });
-    }
-
-    window.addEventListener("load", () => {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(() => startScanner())
-        .catch(() => {
-          document.getElementById("error").innerText = "❌ Please allow camera access in browser settings.";
-        });
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        console.log("✅ Scanned QR:", decodedText);
+        html5QrCode.stop();
+        document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
+      }
+    ).catch(err => {
+      document.getElementById("error").innerText = "❌ Camera error: " + err;
     });
   </script>
 </body>
