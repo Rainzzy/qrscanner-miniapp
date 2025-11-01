@@ -50,7 +50,7 @@
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    window.addEventListener("load", () => {
+    window.addEventListener("DOMContentLoaded", () => {
       html5QrCode.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
