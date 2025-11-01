@@ -17,6 +17,7 @@
       width: 100vw;
       height: 100vh;
       position: relative;
+      display: none;
     }
     #qr-frame {
       position: absolute;
@@ -37,34 +38,56 @@
       color: red;
       font-size: 16px;
     }
+    #start-btn {
+      margin-top: 40vh;
+      padding: 12px 24px;
+      font-size: 18px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <div id="reader"></div>
-  <div id="qr-frame"></div>
+  <button id="start-btn">📷 Start Scanning</button>
+  <div id="reader">
+    <div id="qr-frame"></div>
+  </div>
   <div id="error"></div>
 
   <script>
-    // Ensure Telegram WebApp context is available
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Fullscreen experience
+    tg.expand();
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      (decodedText) => {
-        // Send scanned QR data to Telegram bot
-        if (tg && tg.sendData) {
-          tg.sendData(decodedText);
-        } else {
-          document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
-        }
-        html5QrCode.stop();
-      }
-    ).catch(err => {
-      document.getElementById("error").innerText = "❌ Camera error: " + err;
+    document.getElementById("start-btn").addEventListener("click", () => {
+      document.getElementById("start-btn").style.display = "none";
+      document.getElementById("reader").style.display = "block";
+
+      // Force permission popup
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(() => {
+          html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+              if (tg && tg.sendData) {
+                tg.sendData(decodedText);
+              } else {
+                document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
+              }
+              html5QrCode.stop();
+            }
+          ).catch(err => {
+            document.getElementById("error").innerText = "❌ Scanner error: " + err;
+          });
+        })
+        .catch(() => {
+          document.getElementById("error").innerText = "❌ Camera access blocked. Please enable it in browser settings.";
+        });
     });
   </script>
 </body>
