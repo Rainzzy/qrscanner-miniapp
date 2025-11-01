@@ -17,29 +17,41 @@
       max-width: 320px;
       margin: auto;
     }
+    #error {
+      color: red;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
   <h2>📷 Scanning QR Code...</h2>
   <div id="reader"></div>
+  <div id="error"></div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    function onScanSuccess(decodedText) {
-      tg.sendData(decodedText); // Send to bot
-      html5QrCode.stop(); // Stop camera
-    }
-
     const html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
-      onScanSuccess
-    ).catch(err => {
-      document.body.innerHTML = `<p>❌ Camera error: ${err}</p>`;
-    });
+
+    // First, request camera access to trigger native permission popup
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(() => {
+        // Permission granted, start scanning
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          (decodedText) => {
+            tg.sendData(decodedText); // Send to bot
+            html5QrCode.stop(); // Stop camera
+          }
+        ).catch(err => {
+          document.getElementById("error").innerText = "❌ Error starting scanner: " + err;
+        });
+      })
+      .catch(() => {
+        document.getElementById("error").innerText = "❌ Please allow camera access to scan QR code.";
+      });
   </script>
 </body>
 </html>
