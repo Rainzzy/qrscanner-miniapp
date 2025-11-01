@@ -45,8 +45,9 @@
   <div id="error"></div>
 
   <script>
+    // Ensure Telegram WebApp context is available
     const tg = window.Telegram.WebApp;
-    tg.expand();
+    tg.expand(); // Fullscreen experience
 
     const html5QrCode = new Html5Qrcode("reader");
 
@@ -54,8 +55,9 @@
       { facingMode: "environment" },
       { fps: 10, qrbox: { width: 250, height: 250 } },
       (decodedText) => {
+        // Send scanned QR data to Telegram bot
         if (tg && tg.sendData) {
-          tg.sendData(decodedText); // Send to Telegram bot
+          tg.sendData(decodedText);
         } else {
           document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
         }
