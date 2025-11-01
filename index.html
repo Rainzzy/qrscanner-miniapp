@@ -2,18 +2,34 @@
 <html>
 <head>
   <title>QR Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    #reader {
+      width: 100%;
+      max-width: 320px;
+      margin: auto;
+    }
+  </style>
 </head>
 <body>
   <h2>📷 Scanning QR Code...</h2>
-  <div id="reader" style="width:300px;"></div>
+  <div id="reader"></div>
+
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
     function onScanSuccess(decodedText) {
-      tg.sendData(decodedText); // Sends to bot
-      html5QrCode.stop(); // Stop camera after scan
+      tg.sendData(decodedText); // Send to bot
+      html5QrCode.stop(); // Stop camera
     }
 
     const html5QrCode = new Html5Qrcode("reader");
@@ -21,7 +37,9 @@
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       onScanSuccess
-    );
+    ).catch(err => {
+      document.body.innerHTML = `<p>❌ Camera error: ${err}</p>`;
+    });
   </script>
 </body>
 </html>
