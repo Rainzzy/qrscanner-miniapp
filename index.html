@@ -21,10 +21,14 @@
       color: red;
       margin-top: 20px;
     }
+    #trigger {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h2>📷 Scanning QR Code...</h2>
+  <button id="trigger">Start</button>
   <div id="reader"></div>
   <div id="error"></div>
 
@@ -34,24 +38,27 @@
 
     const html5QrCode = new Html5Qrcode("reader");
 
-    // First, request camera access to trigger native permission popup
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(() => {
-        // Permission granted, start scanning
-        html5QrCode.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
-          (decodedText) => {
-            tg.sendData(decodedText); // Send to bot
-            html5QrCode.stop(); // Stop camera
-          }
-        ).catch(err => {
-          document.getElementById("error").innerText = "❌ Error starting scanner: " + err;
-        });
-      })
-      .catch(() => {
+    function startScanner() {
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText) => {
+          tg.sendData(decodedText);
+          html5QrCode.stop();
+        }
+      ).catch(err => {
         document.getElementById("error").innerText = "❌ Please allow camera access to scan QR code.";
       });
+    }
+
+    // Simulate a user gesture after short delay
+    window.onload = () => {
+      setTimeout(() => {
+        document.getElementById("trigger").click();
+      }, 500); // Delay to ensure Telegram WebView is ready
+    };
+
+    document.getElementById("trigger").addEventListener("click", startScanner);
   </script>
 </body>
 </html>
