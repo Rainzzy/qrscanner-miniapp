@@ -5,175 +5,347 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body {
+    * {
       margin: 0;
       padding: 0;
-      background: #111;
-      font-family: sans-serif;
-      text-align: center;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: #0a0a0a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       color: white;
       overflow: hidden;
+      height: 100vh;
+    }
+    
+    .container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     
     #reader {
       width: 100%;
-      height: 100vh;
-      position: relative;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
     
-    #qr-frame {
+    .scan-area {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 250px;
-      height: 250px;
       transform: translate(-50%, -50%);
-      border: 3px solid #00ff9d;
-      border-radius: 8px;
-      box-sizing: border-box;
+      width: 280px;
+      height: 280px;
       z-index: 10;
-      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.7);
     }
     
-    #status {
-      position: absolute;
-      top: 20px;
+    .scan-frame {
       width: 100%;
-      text-align: center;
-      color: white;
-      font-size: 18px;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 20;
-    }
-    
-    #error {
-      position: absolute;
-      bottom: 20px;
-      width: 100%;
-      text-align: center;
-      color: red;
-      font-size: 16px;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 20;
+      height: 100%;
+      border: 3px solid #00ff9d;
+      border-radius: 12px;
+      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.85),
+                  0 0 20px rgba(0, 255, 157, 0.5);
+      position: relative;
     }
     
     .scan-line {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 250px;
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 3px;
-      background: #00ff9d;
-      transform: translate(-50%, -50%);
-      animation: scan 2s linear infinite;
-      z-index: 11;
+      background: linear-gradient(90deg, transparent, #00ff9d, transparent);
+      animation: scan 2s ease-in-out infinite;
       box-shadow: 0 0 10px #00ff9d;
     }
     
     @keyframes scan {
-      0% { top: 50%; }
-      50% { top: calc(50% + 120px); }
-      100% { top: 50%; }
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+    
+    .corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: #00ff9d;
+      border-style: solid;
+    }
+    
+    .corner-tl {
+      top: -3px;
+      left: -3px;
+      border-width: 3px 0 0 3px;
+      border-radius: 12px 0 0 0;
+    }
+    
+    .corner-tr {
+      top: -3px;
+      right: -3px;
+      border-width: 3px 3px 0 0;
+      border-radius: 0 12px 0 0;
+    }
+    
+    .corner-bl {
+      bottom: -3px;
+      left: -3px;
+      border-width: 0 0 3px 3px;
+      border-radius: 0 0 0 12px;
+    }
+    
+    .corner-br {
+      bottom: -3px;
+      right: -3px;
+      border-width: 0 3px 3px 0;
+      border-radius: 0 0 12px 0;
+    }
+    
+    #status {
+      position: absolute;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 18px;
+      font-weight: 500;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 20;
+      backdrop-filter: blur(10px);
+    }
+    
+    #error {
+      position: absolute;
+      bottom: 40px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      color: #ff4444;
+      font-size: 16px;
+      padding: 15px;
+      background: rgba(255, 68, 68, 0.1);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      border-radius: 10px;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+    }
+    
+    .instructions {
+      position: absolute;
+      bottom: 100px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      color: #ccc;
+      font-size: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      z-index: 20;
+      backdrop-filter: blur(10px);
     }
   </style>
 </head>
 <body>
-  <div id="reader"></div>
-  <div id="qr-frame"></div>
-  <div class="scan-line"></div>
-  <div id="status">Starting QR Scanner...</div>
-  <div id="error"></div>
+  <div class="container">
+    <div id="reader"></div>
+    
+    <div class="scan-area">
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+      </div>
+    </div>
+    
+    <div id="status">Initializing QR Scanner...</div>
+    <div class="instructions">Position QR code within the frame</div>
+    <div id="error"></div>
+  </div>
 
   <script>
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.expand();
+      tg.enableClosingConfirmation();
     }
 
     const html5QrCode = new Html5Qrcode("reader");
     const errorDiv = document.getElementById("error");
     const statusDiv = document.getElementById("status");
 
-    // Clear any previous messages
-    errorDiv.textContent = "";
-    statusDiv.textContent = "Starting QR Scanner...";
+    let isScanning = false;
 
     async function startScanner() {
+      if (isScanning) return;
+      
       try {
-        // Check if camera is available
+        statusDiv.textContent = "Requesting camera access...";
+        errorDiv.textContent = "";
+        
+        // First check if we have camera access
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          showError("Camera API is not supported in this browser.");
-          return;
+          throw new Error("Camera API not supported");
         }
 
-        // Start the QR scanner directly with specific constraints
+        // Test camera permission first
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } 
+        });
+        
+        // Stop the test stream immediately
+        stream.getTracks().forEach(track => track.stop());
+        
+        statusDiv.textContent = "Starting scanner...";
+        
+        // Now start the QR scanner
         await html5QrCode.start(
           { 
             facingMode: "environment",
-            aspectRatio: 1
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
           },
-          { 
-            fps: 10, 
-            qrbox: { 
-              width: 250, 
-              height: 250 
+          {
+            fps: 10,
+            qrbox: {
+              width: 250,
+              height: 250
             },
             aspectRatio: 1.0,
             focusMode: "continuous"
           },
-          (decodedText) => {
-            // QR Code scanned successfully
-            statusDiv.textContent = "QR Code detected!";
-            statusDiv.style.color = "#00ff00";
-            
-            // Send data to Telegram bot and close
-            if (tg && tg.sendData) {
-              tg.sendData(decodedText);
-              // Close the WebApp immediately
-              tg.close();
-            } else {
-              // Fallback for non-Telegram environment
-              showError("✅ Scanned: " + decodedText);
-              // Simulate closing after 2 seconds
-              setTimeout(() => {
-                document.body.innerHTML = "<h1>QR Code Scanned Successfully!</h1><p>You can close this window.</p>";
-              }, 2000);
-            }
-          },
-          (errorMessage) => {
-            // Ignore scanning errors - they happen frequently while no QR code is in view
-          }
+          onScanSuccess,
+          onScanError
         );
         
-        statusDiv.textContent = "Scanner Active - Point camera at QR code";
-        statusDiv.style.color = "#00ff00";
+        isScanning = true;
+        statusDiv.textContent = "Scanner active - Point at QR code";
+        statusDiv.style.color = "#00ff9d";
         
       } catch (err) {
-        console.error("Camera error:", err);
-        if (err.name === "NotAllowedError") {
-          showError("❌ Camera permission denied. Please allow camera access and refresh the page.");
-        } else if (err.name === "NotFoundError") {
-          showError("❌ No camera found on this device.");
-        } else if (err.name === "NotSupportedError") {
-          showError("❌ Camera not supported in this browser.");
-        } else if (err.name === "NotReadableError") {
-          showError("❌ Camera is already in use by another application.");
-        } else {
-          showError("❌ Failed to start camera: " + err.message);
-        }
-        statusDiv.textContent = "Camera Error";
-        statusDiv.style.color = "red";
+        console.error("Scanner error:", err);
+        handleCameraError(err);
       }
     }
 
-    function showError(message) {
-      errorDiv.textContent = message;
+    function onScanSuccess(decodedText) {
+      statusDiv.textContent = "✓ QR Code detected!";
+      statusDiv.style.color = "#00ff9d";
+      
+      // Send data to Telegram bot
+      if (tg && tg.sendData) {
+        tg.sendData(decodedText);
+        // Close the WebApp
+        setTimeout(() => {
+          if (tg.close) {
+            tg.close();
+          }
+        }, 500);
+      } else {
+        // Fallback for non-Telegram environment
+        errorDiv.textContent = "Scanned: " + decodedText;
+        errorDiv.style.color = "#00ff9d";
+        setTimeout(() => {
+          alert("QR Code scanned: " + decodedText);
+        }, 100);
+      }
+      
+      // Stop scanning
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(console.error);
+      }
     }
 
-    // Start scanning immediately when page loads
-    window.addEventListener("DOMContentLoaded", startScanner);
+    function onScanError(errorMessage) {
+      // Ignore most scanning errors - they're normal when no QR code is visible
+    }
+
+    function handleCameraError(err) {
+      let errorMessage = "Camera error: ";
+      
+      switch (err.name) {
+        case "NotAllowedError":
+          errorMessage = "❌ Camera permission denied. Please allow camera access in Telegram settings and refresh.";
+          break;
+        case "NotFoundError":
+          errorMessage = "❌ No camera found on this device.";
+          break;
+        case "NotSupportedError":
+          errorMessage = "❌ Camera not supported in this browser.";
+          break;
+        case "NotReadableError":
+          errorMessage = "❌ Camera is already in use by another application.";
+          break;
+        case "OverconstrainedError":
+        case "ConstraintNotSatisfiedError":
+          errorMessage = "❌ Camera doesn't support required settings. Trying alternative...";
+          // Try again with simpler constraints
+          setTimeout(() => startWithSimpleConstraints(), 1000);
+          return;
+        default:
+          errorMessage = "❌ Failed to start camera: " + (err.message || "Unknown error");
+      }
+      
+      errorDiv.textContent = errorMessage;
+      statusDiv.textContent = "Camera error";
+      statusDiv.style.color = "#ff4444";
+    }
+
+    async function startWithSimpleConstraints() {
+      try {
+        statusDiv.textContent = "Trying alternative camera settings...";
+        
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: {
+              width: 250,
+              height: 250
+            },
+            aspectRatio: 1.0
+          },
+          onScanSuccess,
+          onScanError
+        );
+        
+        isScanning = true;
+        statusDiv.textContent = "Scanner active - Point at QR code";
+        statusDiv.style.color = "#00ff9d";
+        
+      } catch (err) {
+        errorDiv.textContent = "❌ Cannot access camera. Please check permissions and try again.";
+        statusDiv.textContent = "Camera error";
+        statusDiv.style.color = "#ff4444";
+      }
+    }
+
+    // Start scanner when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(startScanner, 500);
+    });
+
+    // Clean up when page unloads
+    window.addEventListener('beforeunload', () => {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(console.error);
+      }
+    });
   </script>
 </body>
 </html>
