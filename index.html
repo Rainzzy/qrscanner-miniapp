@@ -8,17 +8,19 @@
     body {
       margin: 0;
       padding: 0;
-      background: black;
+      background: #111;
       font-family: sans-serif;
       text-align: center;
       color: white;
       overflow: hidden;
     }
+    
     #reader {
-      width: 100vw;
+      width: 100%;
       height: 100vh;
       position: relative;
     }
+    
     #qr-frame {
       position: absolute;
       top: 50%;
@@ -26,21 +28,13 @@
       width: 250px;
       height: 250px;
       transform: translate(-50%, -50%);
-      border: 3px solid red;
+      border: 3px solid #00ff9d;
+      border-radius: 8px;
       box-sizing: border-box;
       z-index: 10;
       box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.7);
     }
-    #error {
-      position: absolute;
-      bottom: 20px;
-      width: 100%;
-      text-align: center;
-      color: red;
-      font-size: 16px;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.7);
-    }
+    
     #status {
       position: absolute;
       top: 20px;
@@ -50,13 +44,46 @@
       font-size: 18px;
       padding: 10px;
       background: rgba(0, 0, 0, 0.7);
+      z-index: 20;
+    }
+    
+    #error {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+      color: red;
+      font-size: 16px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 20;
+    }
+    
+    .scan-line {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 250px;
+      height: 3px;
+      background: #00ff9d;
+      transform: translate(-50%, -50%);
+      animation: scan 2s linear infinite;
+      z-index: 11;
+      box-shadow: 0 0 10px #00ff9d;
+    }
+    
+    @keyframes scan {
+      0% { top: 50%; }
+      50% { top: calc(50% + 120px); }
+      100% { top: 50%; }
     }
   </style>
 </head>
 <body>
   <div id="reader"></div>
   <div id="qr-frame"></div>
-  <div id="status">Starting camera...</div>
+  <div class="scan-line"></div>
+  <div id="status">Starting QR Scanner...</div>
   <div id="error"></div>
 
   <script>
@@ -71,7 +98,7 @@
 
     // Clear any previous messages
     errorDiv.textContent = "";
-    statusDiv.textContent = "Starting camera...";
+    statusDiv.textContent = "Starting QR Scanner...";
 
     async function startScanner() {
       try {
@@ -81,35 +108,46 @@
           return;
         }
 
-        // Start the QR scanner directly
+        // Start the QR scanner directly with specific constraints
         await html5QrCode.start(
-          { facingMode: "environment" },
+          { 
+            facingMode: "environment",
+            aspectRatio: 1
+          },
           { 
             fps: 10, 
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0
+            qrbox: { 
+              width: 250, 
+              height: 250 
+            },
+            aspectRatio: 1.0,
+            focusMode: "continuous"
           },
           (decodedText) => {
             // QR Code scanned successfully
             statusDiv.textContent = "QR Code detected!";
             statusDiv.style.color = "#00ff00";
             
-            // Send data to Telegram if available
+            // Send data to Telegram bot and close
             if (tg && tg.sendData) {
               tg.sendData(decodedText);
+              // Close the WebApp immediately
+              tg.close();
             } else {
+              // Fallback for non-Telegram environment
               showError("✅ Scanned: " + decodedText);
+              // Simulate closing after 2 seconds
+              setTimeout(() => {
+                document.body.innerHTML = "<h1>QR Code Scanned Successfully!</h1><p>You can close this window.</p>";
+              }, 2000);
             }
-            
-            // Keep scanning for more codes (remove this if you want to stop after one scan)
-            // html5QrCode.stop();
           },
           (errorMessage) => {
             // Ignore scanning errors - they happen frequently while no QR code is in view
           }
         );
         
-        statusDiv.textContent = "Camera active - Point at QR code";
+        statusDiv.textContent = "Scanner Active - Point camera at QR code";
         statusDiv.style.color = "#00ff00";
         
       } catch (err) {
@@ -125,7 +163,7 @@
         } else {
           showError("❌ Failed to start camera: " + err.message);
         }
-        statusDiv.textContent = "Camera error";
+        statusDiv.textContent = "Camera Error";
         statusDiv.style.color = "red";
       }
     }
