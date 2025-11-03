@@ -12,6 +12,7 @@
       font-family: sans-serif;
       text-align: center;
       color: white;
+      overflow: hidden;
     }
     #reader {
       width: 100vw;
@@ -28,6 +29,7 @@
       border: 3px solid red;
       box-sizing: border-box;
       z-index: 10;
+      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.7);
     }
     #error {
       position: absolute;
@@ -36,48 +38,104 @@
       text-align: center;
       color: red;
       font-size: 16px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.7);
+    }
+    #status {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 18px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.7);
     }
   </style>
 </head>
 <body>
   <div id="reader"></div>
   <div id="qr-frame"></div>
+  <div id="status">Starting camera...</div>
   <div id="error"></div>
 
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.expand();
+    }
 
     const html5QrCode = new Html5Qrcode("reader");
+    const errorDiv = document.getElementById("error");
+    const statusDiv = document.getElementById("status");
 
-    async function triggerCameraPermission() {
+    // Clear any previous messages
+    errorDiv.textContent = "";
+    statusDiv.textContent = "Starting camera...";
+
+    async function startScanner() {
       try {
-        // Force native permission popup
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop()); // release lock
+        // Check if camera is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showError("Camera API is not supported in this browser.");
+          return;
+        }
 
-        // Start scanner after permission granted
-        html5QrCode.start(
+        // Start the QR scanner directly
+        await html5QrCode.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0
+          },
           (decodedText) => {
+            // QR Code scanned successfully
+            statusDiv.textContent = "QR Code detected!";
+            statusDiv.style.color = "#00ff00";
+            
+            // Send data to Telegram if available
             if (tg && tg.sendData) {
               tg.sendData(decodedText);
             } else {
-              document.getElementById("error").innerText = "✅ Scanned: " + decodedText;
+              showError("✅ Scanned: " + decodedText);
             }
-            html5QrCode.stop();
+            
+            // Keep scanning for more codes (remove this if you want to stop after one scan)
+            // html5QrCode.stop();
+          },
+          (errorMessage) => {
+            // Ignore scanning errors - they happen frequently while no QR code is in view
           }
-        ).catch(err => {
-          document.getElementById("error").innerText = "❌ Scanner error: " + err;
-        });
-
+        );
+        
+        statusDiv.textContent = "Camera active - Point at QR code";
+        statusDiv.style.color = "#00ff00";
+        
       } catch (err) {
-        document.getElementById("error").innerText = "❌ Camera permission denied or blocked. Please enable it in Telegram app settings.";
+        console.error("Camera error:", err);
+        if (err.name === "NotAllowedError") {
+          showError("❌ Camera permission denied. Please allow camera access and refresh the page.");
+        } else if (err.name === "NotFoundError") {
+          showError("❌ No camera found on this device.");
+        } else if (err.name === "NotSupportedError") {
+          showError("❌ Camera not supported in this browser.");
+        } else if (err.name === "NotReadableError") {
+          showError("❌ Camera is already in use by another application.");
+        } else {
+          showError("❌ Failed to start camera: " + err.message);
+        }
+        statusDiv.textContent = "Camera error";
+        statusDiv.style.color = "red";
       }
     }
 
-    window.addEventListener("DOMContentLoaded", triggerCameraPermission);
+    function showError(message) {
+      errorDiv.textContent = message;
+    }
+
+    // Start scanning immediately when page loads
+    window.addEventListener("DOMContentLoaded", startScanner);
   </script>
 </body>
 </html>
