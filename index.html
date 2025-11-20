@@ -15,39 +15,37 @@
       background: #000;
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       color: white;
-      overflow: hidden;
       height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     
-    .scanner-container {
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+    }
+    
+    .scanner-area {
       position: relative;
       width: 100%;
-      height: 100vh;
-      background: #000;
+      max-width: 400px;
+      height: 400px;
+      margin: 20px 0;
+      background: #111;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
     }
     
     #reader {
       width: 100%;
       height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    
-    /* Hole effect overlay */
-    .hole-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(
-        circle at center,
-        transparent 140px,
-        rgba(0, 0, 0, 0.95) 141px
-      );
-      z-index: 10;
-      pointer-events: none;
     }
     
     .scan-frame {
@@ -59,9 +57,31 @@
       height: 280px;
       border: 2px solid #00ff9d;
       border-radius: 12px;
-      z-index: 11;
+      z-index: 10;
       pointer-events: none;
-      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.95);
+      background: transparent;
+    }
+    
+    .scan-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 9;
+    }
+    
+    .scan-overlay::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px;
+      height: 280px;
+      background: transparent;
+      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0);
     }
     
     .scan-line {
@@ -72,7 +92,7 @@
       height: 3px;
       background: linear-gradient(90deg, transparent, #00ff9d, transparent);
       animation: scan 2s ease-in-out infinite;
-      z-index: 12;
+      z-index: 11;
       box-shadow: 0 0 10px #00ff9d;
     }
     
@@ -82,28 +102,126 @@
     }
     
     .status {
-      position: absolute;
-      top: 20px;
-      width: 100%;
-      text-align: center;
-      color: white;
-      font-size: 18px;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      font-size: 16px;
       font-weight: 500;
-      padding: 12px;
-      z-index: 20;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(255, 193, 7, 0.2);
+      border: 1px solid rgba(255, 193, 7, 0.5);
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .error {
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      font-size: 16px;
+      background: rgba(244, 67, 54, 0.2);
+      border: 1px solid rgba(244, 67, 54, 0.5);
+      color: #F44336;
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .success {
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      font-size: 16px;
+      background: rgba(76, 175, 80, 0.2);
+      border: 1px solid rgba(76, 175, 80, 0.5);
+      color: #4CAF50;
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .permission-btn {
+      background: linear-gradient(45deg, #2196F3, #21CBF3);
+      border: none;
+      border-radius: 25px;
+      color: white;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 10px 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .permission-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+    }
+    
+    .permission-btn:disabled {
+      background: #666;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .instructions {
+      background: rgba(33, 150, 243, 0.2);
+      border: 1px solid rgba(33, 150, 243, 0.5);
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 14px;
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    /* Prevent scrolling */
+    html, body {
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 <body>
-  <div class="scanner-container">
-    <div id="reader"></div>
-    <div class="hole-overlay"></div>
-    <div class="scan-frame">
-      <div class="scan-line"></div>
+  <div class="container">
+    <div class="scanner-area">
+      <div id="reader"></div>
+      <div class="scan-overlay"></div>
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+      </div>
     </div>
     
-    <div id="status" class="status">Starting QR Scanner...</div>
+    <div id="status" class="status">Ready to scan QR codes</div>
+    
+    <div id="error" class="error hidden">
+      Camera access is required to scan QR codes.
+    </div>
+    
+    <div id="success" class="success hidden">
+      QR Code scanned successfully!
+    </div>
+    
+    <button id="permission-btn" class="permission-btn">
+      Start Camera & Scan QR Code
+    </button>
+    
+    <div class="instructions">
+      <strong>Instructions:</strong><br>
+      1. Tap "Start Camera" to begin scanning<br>
+      2. Allow camera access when prompted
+    </div>
   </div>
 
   <script>
@@ -111,120 +229,188 @@
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.expand();
-      tg.ready();
     }
 
+    // DOM elements
+    const statusElement = document.getElementById('status');
+    const errorElement = document.getElementById('error');
+    const successElement = document.getElementById('success');
+    const permissionBtn = document.getElementById('permission-btn');
+    
     let html5QrCode = null;
     let isScanning = false;
-
-    // Start scanner function
-    async function startScanner() {
-      if (isScanning) return;
-
+    
+    // Initialize the scanner
+    function initScanner() {
       try {
-        document.getElementById('status').textContent = "Starting camera...";
-
+        html5QrCode = new Html5Qrcode("reader");
+        // Don't auto-start, wait for button click
+        statusElement.textContent = "Tap the button below to start scanning";
+      } catch (error) {
+        showError("Failed to initialize QR scanner");
+      }
+    }
+    
+    // Request camera permission
+    async function requestCameraPermission() {
+      try {
+        statusElement.textContent = "Requesting camera access...";
+        errorElement.classList.add('hidden');
+        successElement.classList.add('hidden');
+        permissionBtn.disabled = true;
+        
         // Check if camera is supported
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          document.getElementById('status').textContent = "Camera not supported";
-          return;
+          throw new Error("Camera not supported");
         }
 
-        // Create scanner instance
-        html5QrCode = new Html5Qrcode("reader");
-
-        // Start QR scanner
+        // Test camera access first
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: "environment" 
+          } 
+        });
+        
+        // Stop the test stream
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Start the QR scanner
+        startScanner();
+        
+      } catch (error) {
+        console.error("Camera permission error:", error);
+        permissionBtn.disabled = false;
+        
+        if (error.name === 'NotAllowedError') {
+          showError("Camera permission denied. Please allow camera access.");
+        } else {
+          showError("Failed to access camera: " + (error.message || "Unknown error"));
+        }
+      }
+    }
+    
+    // Start the QR scanner
+    async function startScanner() {
+      if (isScanning) return;
+      
+      try {
+        statusElement.textContent = "Starting scanner...";
+        
+        const config = {
+          fps: 10,
+          qrbox: {
+            width: 250,
+            height: 250
+          },
+          aspectRatio: 1.0
+        };
+        
+        // Try rear camera first
         await html5QrCode.start(
           { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: {
-              width: 250,
-              height: 250
-            },
-            aspectRatio: 1.0
-          },
+          config,
           onScanSuccess,
           onScanFailure
         );
-
-        isScanning = true;
-        document.getElementById('status').textContent = "Scanner ready";
-
-      } catch (error) {
-        console.error("Scanner error:", error);
-        document.getElementById('status').textContent = "Camera access failed";
         
-        // Try again with front camera
+        isScanning = true;
+        statusElement.textContent = "Scanner active - Point camera at QR code";
+        permissionBtn.textContent = "Scanning...";
+        permissionBtn.disabled = true;
+        
+      } catch (error) {
+        console.error("Scanner start error:", error);
+        
+        // Try front camera as fallback
         try {
           await html5QrCode.start(
             { facingMode: "user" },
-            {
-              fps: 10,
-              qrbox: {
-                width: 250,
-                height: 250
-              }
-            },
+            config,
             onScanSuccess,
             onScanFailure
           );
           
           isScanning = true;
-          document.getElementById('status').textContent = "Scanner ready";
+          statusElement.textContent = "Scanner active - Point camera at QR code";
+          permissionBtn.textContent = "Scanning...";
+          permissionBtn.disabled = true;
           
         } catch (secondError) {
-          document.getElementById('status').textContent = "Cannot access camera";
+          showError("Failed to start camera: " + (secondError.message || "Please check permissions"));
+          permissionBtn.disabled = false;
+          permissionBtn.textContent = "Try Again";
         }
       }
     }
-
+    
     // Handle successful scan
     function onScanSuccess(decodedText) {
       console.log("QR Code scanned:", decodedText);
       
-      document.getElementById('status').textContent = "QR Code detected!";
+      // Update UI
+      statusElement.classList.add('hidden');
+      errorElement.classList.add('hidden');
+      successElement.classList.remove('hidden');
+      successElement.textContent = "QR Code scanned successfully!";
       
-      // Send data to Telegram bot
-      if (tg && tg.sendData) {
-        tg.sendData(decodedText);
-        
-        // Force close the WebApp - multiple methods
-        setTimeout(() => {
-          if (tg.close) {
-            tg.close();
-          }
-          // Additional close methods
-          if (window.close) {
-            window.close();
-          }
-        }, 300);
-      }
-      
-      // Stop scanner
+      // Stop scanning
       if (html5QrCode && isScanning) {
         html5QrCode.stop().then(() => {
           isScanning = false;
         }).catch(console.error);
       }
+      
+      // Send data to Telegram bot
+      if (tg && tg.sendData) {
+        tg.sendData(decodedText);
+        
+        // Close after a short delay
+        setTimeout(() => {
+          if (tg.close) {
+            tg.close();
+          }
+        }, 1500);
+      } else {
+        // Fallback for non-Telegram environment
+        successElement.textContent = `QR Code scanned: ${decodedText}`;
+        permissionBtn.textContent = "Scan Another QR Code";
+        permissionBtn.disabled = false;
+      }
     }
-
-    // Handle scan failures
+    
+    // Handle scan failure (normal - happens when no QR code is visible)
     function onScanFailure(error) {
-      // Ignore normal scanning failures
+      // Don't show errors for normal scanning failures
     }
-
-    // Initialize scanner when page loads
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(startScanner, 500);
-    });
-
+    
+    // Show error message
+    function showError(message) {
+      errorElement.textContent = message;
+      errorElement.classList.remove('hidden');
+      statusElement.classList.add('hidden');
+    }
+    
+    // Request camera permission when button is clicked
+    permissionBtn.addEventListener('click', requestCameraPermission);
+    
+    // Initialize when page loads
+    window.addEventListener('DOMContentLoaded', initScanner);
+    
     // Clean up when page unloads
     window.addEventListener('beforeunload', () => {
       if (html5QrCode && isScanning) {
         html5QrCode.stop().catch(console.error);
       }
     });
+
+    // Prevent any scrolling
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('wheel', function(e) {
+      e.preventDefault();
+    }, { passive: false });
   </script>
 </body>
 </html>
