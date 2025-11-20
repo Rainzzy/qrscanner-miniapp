@@ -72,18 +72,6 @@
       z-index: 9;
     }
     
-    .scan-overlay::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 280px;
-      height: 280px;
-      background: transparent;
-      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0);
-    }
-    
     .scan-line {
       position: absolute;
       top: 0;
@@ -156,11 +144,6 @@
       max-width: 400px;
     }
     
-    .permission-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
-    }
-    
     .permission-btn:disabled {
       background: #666;
       cursor: not-allowed;
@@ -184,7 +167,6 @@
       display: none;
     }
     
-    /* Prevent scrolling */
     html, body {
       overflow: hidden;
       position: fixed;
@@ -230,6 +212,7 @@
     if (tg) {
       tg.expand();
       tg.ready();
+      console.log('Telegram WebApp initialized');
     }
 
     // DOM elements
@@ -245,7 +228,6 @@
     function initScanner() {
       try {
         html5QrCode = new Html5Qrcode("reader");
-        // Don't auto-start, wait for button click
         statusElement.textContent = "Tap the button below to start scanning";
       } catch (error) {
         showError("Failed to initialize QR scanner");
@@ -260,22 +242,15 @@
         successElement.classList.add('hidden');
         permissionBtn.disabled = true;
         
-        // Check if camera is supported
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           throw new Error("Camera not supported");
         }
 
-        // Test camera access first
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: "environment" 
-          } 
+          video: { facingMode: "environment" } 
         });
         
-        // Stop the test stream
         stream.getTracks().forEach(track => track.stop());
-        
-        // Start the QR scanner
         startScanner();
         
       } catch (error) {
@@ -285,7 +260,7 @@
         if (error.name === 'NotAllowedError') {
           showError("Camera permission denied. Please allow camera access.");
         } else {
-          showError("Failed to access camera: " + (error.message || "Unknown error"));
+          showError("Failed to access camera");
         }
       }
     }
@@ -299,14 +274,10 @@
         
         const config = {
           fps: 10,
-          qrbox: {
-            width: 250,
-            height: 250
-          },
+          qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0
         };
         
-        // Try rear camera first
         await html5QrCode.start(
           { facingMode: "environment" },
           config,
@@ -322,11 +293,10 @@
       } catch (error) {
         console.error("Scanner start error:", error);
         
-        // Try front camera as fallback
         try {
           await html5QrCode.start(
             { facingMode: "user" },
-            config,
+            { fps: 10, qrbox: { width: 250, height: 250 } },
             onScanSuccess,
             onScanFailure
           );
@@ -337,24 +307,23 @@
           permissionBtn.disabled = true;
           
         } catch (secondError) {
-          showError("Failed to start camera: " + (secondError.message || "Please check permissions"));
+          showError("Failed to start camera");
           permissionBtn.disabled = false;
           permissionBtn.textContent = "Try Again";
         }
       }
     }
     
-    // Handle successful scan
+    // Handle successful scan - FORCE CLOSE VERSION
     async function onScanSuccess(decodedText) {
       console.log("QR Code scanned:", decodedText);
       
-      // Update UI
       statusElement.classList.add('hidden');
       errorElement.classList.add('hidden');
       successElement.classList.remove('hidden');
-      successElement.textContent = "QR Code scanned successfully! Closing...";
+      successElement.textContent = "QR Code scanned! Closing...";
       
-      // Stop scanning first
+      // Stop scanner immediately
       if (html5QrCode && isScanning) {
         try {
           await html5QrCode.stop();
@@ -369,46 +338,65 @@
         console.log("Sending data to Telegram:", decodedText);
         tg.sendData(decodedText);
         
-        // Multiple methods to ensure WebApp closes
+        // AGGRESSIVE CLOSE ATTEMPTS
         setTimeout(() => {
-          // Method 1: Telegram's close method
+          console.log("Attempting to close WebApp...");
+          
+          // Method 1: Standard Telegram close
           if (tg.close) {
-            console.log("Closing via tg.close()");
+            console.log("Trying tg.close()");
             tg.close();
           }
           
-          // Method 2: Try alternative Telegram method
-          if (tg.hide) {
-            console.log("Hiding via tg.hide()");
-            tg.hide();
-          }
-          
-          // Method 3: Post message to parent (if in iframe)
-          if (window.parent !== window) {
-            console.log("Sending postMessage to close");
-            window.parent.postMessage({ type: 'web_app_close' }, '*');
-          }
-          
-          // Method 4: Show message as fallback
+          // Method 2: Try multiple times with delays
           setTimeout(() => {
-            successElement.textContent = "Data sent! You can close this window manually.";
+            if (tg.close) {
+              console.log("Trying tg.close() again");
+              tg.close();
+            }
+          }, 100);
+          
+          setTimeout(() => {
+            if (tg.close) {
+              console.log("Third attempt with tg.close()");
+              tg.close();
+            }
+          }, 300);
+          
+          // Method 3: Try to trigger back button behavior
+          setTimeout(() => {
+            if (tg.BackButton && tg.BackButton.isVisible) {
+              console.log("Using BackButton to close");
+              tg.BackButton.onClick(tg.close);
+              tg.BackButton.show();
+              setTimeout(() => {
+                if (tg.BackButton._onClick) {
+                  tg.BackButton._onClick();
+                }
+              }, 50);
+            }
+          }, 200);
+          
+          // Method 4: Last resort - show close instruction
+          setTimeout(() => {
+            successElement.textContent = "✅ Scan complete! Please close this window manually.";
             permissionBtn.textContent = "Scan Another QR Code";
             permissionBtn.disabled = false;
             permissionBtn.classList.remove('hidden');
           }, 2000);
           
-        }, 500);
+        }, 100);
       } else {
-        // Fallback for non-Telegram environment
-        successElement.textContent = `QR Code scanned: ${decodedText}`;
+        // Not in Telegram
+        successElement.textContent = `QR Code: ${decodedText}`;
         permissionBtn.textContent = "Scan Another QR Code";
         permissionBtn.disabled = false;
       }
     }
     
-    // Handle scan failure (normal - happens when no QR code is visible)
+    // Handle scan failure
     function onScanFailure(error) {
-      // Don't show errors for normal scanning failures
+      // Ignore scanning errors
     }
     
     // Show error message
@@ -424,14 +412,14 @@
     // Initialize when page loads
     window.addEventListener('DOMContentLoaded', initScanner);
     
-    // Clean up when page unloads
+    // Clean up
     window.addEventListener('beforeunload', () => {
       if (html5QrCode && isScanning) {
         html5QrCode.stop().catch(console.error);
       }
     });
 
-    // Prevent any scrolling
+    // Prevent scrolling
     document.addEventListener('touchmove', function(e) {
       e.preventDefault();
     }, { passive: false });
@@ -439,15 +427,6 @@
     document.addEventListener('wheel', function(e) {
       e.preventDefault();
     }, { passive: false });
-
-    // Listen for messages from parent (if Telegram wants to close us)
-    window.addEventListener('message', function(event) {
-      if (event.data && event.data.type === 'web_app_close') {
-        if (tg && tg.close) {
-          tg.close();
-        }
-      }
-    });
   </script>
 </body>
 </html>
