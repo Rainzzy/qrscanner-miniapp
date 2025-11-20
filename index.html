@@ -229,6 +229,7 @@
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.expand();
+      tg.ready();
     }
 
     // DOM elements
@@ -344,32 +345,59 @@
     }
     
     // Handle successful scan
-    function onScanSuccess(decodedText) {
+    async function onScanSuccess(decodedText) {
       console.log("QR Code scanned:", decodedText);
       
       // Update UI
       statusElement.classList.add('hidden');
       errorElement.classList.add('hidden');
       successElement.classList.remove('hidden');
-      successElement.textContent = "QR Code scanned successfully!";
+      successElement.textContent = "QR Code scanned successfully! Closing...";
       
-      // Stop scanning
+      // Stop scanning first
       if (html5QrCode && isScanning) {
-        html5QrCode.stop().then(() => {
+        try {
+          await html5QrCode.stop();
           isScanning = false;
-        }).catch(console.error);
+        } catch (err) {
+          console.error("Error stopping scanner:", err);
+        }
       }
       
       // Send data to Telegram bot
       if (tg && tg.sendData) {
+        console.log("Sending data to Telegram:", decodedText);
         tg.sendData(decodedText);
         
-        // Close after a short delay
+        // Multiple methods to ensure WebApp closes
         setTimeout(() => {
+          // Method 1: Telegram's close method
           if (tg.close) {
+            console.log("Closing via tg.close()");
             tg.close();
           }
-        }, 1500);
+          
+          // Method 2: Try alternative Telegram method
+          if (tg.hide) {
+            console.log("Hiding via tg.hide()");
+            tg.hide();
+          }
+          
+          // Method 3: Post message to parent (if in iframe)
+          if (window.parent !== window) {
+            console.log("Sending postMessage to close");
+            window.parent.postMessage({ type: 'web_app_close' }, '*');
+          }
+          
+          // Method 4: Show message as fallback
+          setTimeout(() => {
+            successElement.textContent = "Data sent! You can close this window manually.";
+            permissionBtn.textContent = "Scan Another QR Code";
+            permissionBtn.disabled = false;
+            permissionBtn.classList.remove('hidden');
+          }, 2000);
+          
+        }, 500);
       } else {
         // Fallback for non-Telegram environment
         successElement.textContent = `QR Code scanned: ${decodedText}`;
@@ -411,6 +439,15 @@
     document.addEventListener('wheel', function(e) {
       e.preventDefault();
     }, { passive: false });
+
+    // Listen for messages from parent (if Telegram wants to close us)
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'web_app_close') {
+        if (tg && tg.close) {
+          tg.close();
+        }
+      }
+    });
   </script>
 </body>
 </html>
